@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carbon Footprint Predictor 🌿</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --forest: #1a3a2a;
+    --moss: #2d5a3d;
+    --leaf: #4a8c5c;
+    --fern: #6db87a;
+    --mint: #a8d5a2;
+    --cream: #f5f0e8;
+    --bark: #5c3d1e;
+    --sky: #c8e6d0;
+    --glow-low: #00e676;
+    --glow-med: #ffca28;
+    --glow-high: #ff5252;
+    --gold: #d4af37;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Lato', sans-serif;
+    background: var(--forest);
+    color: var(--cream);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* ── Animated forest background ── */
+  .bg-scene {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .sky-gradient {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 60% 0%, #0d2b1a 0%, #071a0f 60%, #020e07 100%);
+  }
+
+  /* Stars */
+  .stars { position: absolute; inset: 0; }
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.7);
+    animation: twinkle var(--d, 3s) ease-in-out infinite var(--delay, 0s);
+  }
+  @keyframes twinkle { 0%,100%{opacity:.2} 50%{opacity:1} }
+
+  /* Trees silhouette */
+  .trees {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 220px;
+    background:
+      radial-gradient(ellipse 60px 120px at 5% 100%, #0a1f12 49%, transparent 50%),
+      radial-gradient(ellipse 80px 160px at 12% 100%, #0d2b18 49%, transparent 50%),
+      radial-gradient(ellipse 70px 140px at 22% 100%, #0a1f12 49%, transparent 50%),
+      radial-gradient(ellipse 90px 180px at 32% 100%, #0d2b18 49%, transparent 50%),
+      radial-gradient(ellipse 60px 130px at 42% 100%, #0a1f12 49%, transparent 50%),
+      radial-gradient(ellipse 85px 170px at 55% 100%, #0d2b18 49%, transparent 50%),
+      radial-gradient(ellipse 70px 150px at 67% 100%, #0a1f12 49%, transparent 50%),
+      radial-gradient(ellipse 80px 160px at 78% 100%, #0d2b18 49%, transparent 50%),
+      radial-gradient(ellipse 65px 135px at 88% 100%, #0a1f12 49%, transparent 50%),
+      radial-gradient(ellipse 75px 155px at 96% 100%, #0d2b18 49%, transparent 50%);
+  }
+
+  /* Floating leaves */
+  .leaf-container { position: absolute; inset: 0; }
+  .leaf {
+    position: absolute;
+    width: var(--size, 18px);
+    height: var(--size, 18px);
+    background: var(--c, #4a8c5c);
+    border-radius: 0 80% 0 80%;
+    opacity: 0;
+    animation: fall var(--fall-d, 8s) ease-in var(--fall-delay, 0s) infinite;
+    transform-origin: center;
+  }
+  @keyframes fall {
+    0%   { opacity: 0; transform: translateY(-20px) rotate(0deg) translateX(0); }
+    10%  { opacity: .9; }
+    90%  { opacity: .6; }
+    100% { opacity: 0; transform: translateY(100vh) rotate(540deg) translateX(var(--sway, 60px)); }
+  }
+
+  /* Fireflies */
+  .firefly {
+    position: absolute;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: #a8ff78;
+    box-shadow: 0 0 6px 2px #a8ff78;
+    animation: fly var(--fly-d, 6s) ease-in-out var(--fly-delay, 0s) infinite alternate;
+  }
+  @keyframes fly {
+    0%   { transform: translate(0, 0); opacity: 0; }
+    20%  { opacity: 1; }
+    80%  { opacity: 0.8; }
+    100% { transform: translate(var(--dx, 80px), var(--dy, -60px)); opacity: 0; }
+  }
+
+  /* ── Layout ── */
+  .container {
+    position: relative;
+    z-index: 10;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: slideDown .8s cubic-bezier(.22,1,.36,1);
+  }
+  @keyframes slideDown { from{opacity:0;transform:translateY(-30px)} to{opacity:1;transform:none} }
+
+  .logo-icon {
+    font-size: 56px;
+    display: block;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 0 20px rgba(106,219,120,.4));
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+  @keyframes pulse-glow {
+    0%,100%{ filter: drop-shadow(0 0 20px rgba(106,219,120,.4)); }
+    50%    { filter: drop-shadow(0 0 40px rgba(106,219,120,.8)); }
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 900;
+    color: var(--mint);
+    letter-spacing: -1px;
+    line-height: 1.1;
+    text-shadow: 0 0 40px rgba(168,213,162,.3);
+  }
+
+  .subtitle {
+    font-size: .95rem;
+    color: var(--fern);
+    margin-top: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ── Form card ── */
+  .card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(106,184,122,.18);
+    border-radius: 20px;
+    padding: 36px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 48px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06);
+    animation: fadeUp .9s cubic-bezier(.22,1,.36,1) .1s both;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    color: var(--gold);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin: 28px 0 16px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(212,175,55,.2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: .78rem;
+    color: var(--fern);
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  select, input[type=number] {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(106,184,122,.25);
+    border-radius: 10px;
+    color: var(--cream);
+    padding: 10px 14px;
+    font-size: .95rem;
+    font-family: 'Lato', sans-serif;
+    outline: none;
+    transition: border-color .25s, box-shadow .25s, background .25s;
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+  }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%234a8c5c' d='M1 1l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+  select option { background: #1a3a2a; color: var(--cream); }
+  select:focus, input[type=number]:focus {
+    border-color: var(--fern);
+    background: rgba(74,140,92,.12);
+    box-shadow: 0 0 0 3px rgba(74,140,92,.15);
+  }
+  input[type=number]::-webkit-inner-spin-button { opacity: .4; }
+
+  .hint { font-size: .72rem; color: rgba(168,213,162,.5); margin-top: 2px; }
+
+  /* Checkboxes for multi-select */
+  .checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .cb-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(106,184,122,.2);
+    border-radius: 30px;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: .85rem;
+    color: var(--mint);
+    transition: all .2s;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+  }
+  .cb-label:hover { background: rgba(74,140,92,.2); border-color: var(--fern); }
+  .cb-label input { display: none; }
+  .cb-label.checked { background: rgba(74,140,92,.35); border-color: var(--fern); color: #fff; }
+
+  /* Submit button */
+  .btn-wrap { text-align: center; margin-top: 36px; }
+  .btn {
+    background: linear-gradient(135deg, #2d7a45 0%, #1a5c30 100%);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 16px 52px;
+    font-size: 1.05rem;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 4px 24px rgba(45,122,69,.5), 0 0 0 0 rgba(106,219,120,0);
+    transition: transform .2s, box-shadow .3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
+    border-radius: inherit;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 36px rgba(45,122,69,.7), 0 0 0 6px rgba(106,219,120,.12); }
+  .btn:active { transform: translateY(0); }
+
+  /* ── Output panel ── */
+  #output {
+    margin-top: 36px;
+    border-radius: 20px;
+    overflow: hidden;
+    display: none;
+    animation: pop .6s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes pop { from{opacity:0;transform:scale(.94)} to{opacity:1;transform:scale(1)} }
+
+  .output-header {
+    padding: 28px 36px 20px;
+    text-align: center;
+    position: relative;
+  }
+
+  .emission-badge {
+    display: inline-block;
+    font-family: 'Playfair Display', serif;
+    font-size: 4rem;
+    font-weight: 900;
+    line-height: 1;
+    position: relative;
+  }
+  .emission-unit {
+    font-size: 1rem;
+    font-weight: 400;
+    opacity: .7;
+    font-family: 'Lato', sans-serif;
+    display: block;
+    margin-top: 4px;
+  }
+
+  .level-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 50px;
+    padding: 8px 22px;
+    font-size: .9rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 14px;
+    border: 2px solid currentColor;
+  }
+
+  /* LOW */
+  .level-LOW .output-header { background: radial-gradient(ellipse at 50% 0%, rgba(0,230,118,.18) 0%, rgba(13,58,26,.0) 70%), rgba(10,30,18,.95); }
+  .level-LOW .emission-badge { color: var(--glow-low); text-shadow: 0 0 30px rgba(0,230,118,.6), 0 0 60px rgba(0,230,118,.3); }
+  .level-LOW .level-pill { color: var(--glow-low); background: rgba(0,230,118,.1); }
+  .level-LOW { border: 1.5px solid rgba(0,230,118,.35); box-shadow: 0 0 60px rgba(0,230,118,.12), 0 8px 32px rgba(0,0,0,.5); }
+
+  /* MEDIUM */
+  .level-MEDIUM .output-header { background: radial-gradient(ellipse at 50% 0%, rgba(255,202,40,.18) 0%, rgba(30,20,5,.0) 70%), rgba(20,15,5,.95); }
+  .level-MEDIUM .emission-badge { color: var(--glow-med); text-shadow: 0 0 30px rgba(255,202,40,.6), 0 0 60px rgba(255,202,40,.3); }
+  .level-MEDIUM .level-pill { color: var(--glow-med); background: rgba(255,202,40,.1); }
+  .level-MEDIUM { border: 1.5px solid rgba(255,202,40,.35); box-shadow: 0 0 60px rgba(255,202,40,.12), 0 8px 32px rgba(0,0,0,.5); }
+
+  /* HIGH */
+  .level-HIGH .output-header { background: radial-gradient(ellipse at 50% 0%, rgba(255,82,82,.18) 0%, rgba(30,5,5,.0) 70%), rgba(20,5,5,.95); }
+  .level-HIGH .emission-badge { color: var(--glow-high); text-shadow: 0 0 30px rgba(255,82,82,.6), 0 0 60px rgba(255,82,82,.3); }
+  .level-HIGH .level-pill { color: var(--glow-high); background: rgba(255,82,82,.1); }
+  .level-HIGH { border: 1.5px solid rgba(255,82,82,.35); box-shadow: 0 0 60px rgba(255,82,82,.12), 0 8px 32px rgba(0,0,0,.5); }
+
+  .suggestions-area {
+    background: rgba(10,20,14,.9);
+    padding: 24px 36px 32px;
+    border-top: 1px solid rgba(255,255,255,.07);
+  }
+  .suggestions-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    color: var(--gold);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.04);
+    margin-bottom: 8px;
+    font-size: .9rem;
+    color: rgba(245,240,232,.85);
+    border-left: 3px solid var(--fern);
+    animation: slideIn .4s ease both;
+    animation-delay: var(--i, 0s);
+  }
+  @keyframes slideIn { from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:none} }
+  .tip-icon { flex-shrink: 0; font-size: 1.1rem; }
+
+  /* Gauge bar */
+  .gauge-wrap { padding: 0 36px 24px; background: rgba(10,20,14,.9); }
+  .gauge-label { display: flex; justify-content: space-between; font-size: .75rem; color: rgba(168,213,162,.5); margin-bottom: 6px; }
+  .gauge-track {
+    height: 10px;
+    border-radius: 20px;
+    background: rgba(255,255,255,.08);
+    overflow: hidden;
+  }
+  .gauge-fill {
+    height: 100%;
+    border-radius: 20px;
+    width: 0;
+    transition: width 1.2s cubic-bezier(.22,1,.36,1);
+    background: linear-gradient(90deg, var(--glow-low), var(--glow-med), var(--glow-high));
+  }
+</style>
+</head>
+<body>
+
+<!-- Background Scene -->
+<div class="bg-scene">
+  <div class="sky-gradient"></div>
+  <div class="stars" id="stars"></div>
+  <div class="leaf-container" id="leaves"></div>
+  <div id="fireflies"></div>
+  <div class="trees"></div>
+</div>
+
+<div class="container">
+  <header>
+    <span class="logo-icon">🌿</span>
+    <h1>Carbon Footprint Predictor</h1>
+    <p class="subtitle">Know Your Impact · Change Your World</p>
+  </header>
+
+  <div class="card">
+    <!-- PERSONAL -->
+    <div class="section-title">🧬 Personal Profile</div>
+    <div class="grid">
+      <div class="field">
+        <label>Body Type</label>
+        <select id="bodyType">
+          <option value="normal">Normal</option>
+          <option value="overweight" selected>Overweight</option>
+          <option value="obese">Obese</option>
+          <option value="underweight">Underweight</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Sex</label>
+        <select id="sex">
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Diet</label>
+        <select id="diet">
+          <option value="vegetarian">Vegetarian</option>
+          <option value="vegan">Vegan</option>
+          <option value="pescatarian">Pescatarian</option>
+          <option value="omnivore">Omnivore</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Shower Frequency</label>
+        <select id="shower">
+          <option value="daily">Daily</option>
+          <option value="less frequently">Less Frequently</option>
+          <option value="more frequently">More Frequently</option>
+          <option value="twice a day">Twice a Day</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- HOME -->
+    <div class="section-title">🏠 Home & Energy</div>
+    <div class="grid">
+      <div class="field">
+        <label>Heating Energy Source</label>
+        <select id="heating">
+          <option value="electricity">Electricity</option>
+          <option value="natural gas">Natural Gas</option>
+          <option value="coal">Coal</option>
+          <option value="wood">Wood</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Energy Efficiency</label>
+        <select id="energyEff">
+          <option value="Yes">Yes</option>
+          <option value="Sometimes">Sometimes</option>
+          <option value="No" selected>No</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Monthly Grocery Bill ($)</label>
+        <input type="number" id="grocery" value="150" min="50" max="299">
+        <span class="hint">Range: 50 – 299</span>
+      </div>
+      <div class="field">
+        <label>New Clothes / Month</label>
+        <input type="number" id="clothes" value="5" min="0" max="50">
+        <span class="hint">Range: 0 – 50</span>
+      </div>
+    </div>
+
+    <!-- COOKING -->
+    <div class="section-title">🍳 Cooking</div>
+    <div class="field">
+      <label>Cooking Appliances Used</label>
+      <div class="checkbox-group" id="cookingGroup">
+        <label class="cb-label" onclick="toggleCb(this)"><input type="checkbox" value="Stove" checked> 🔥 Stove</label>
+        <label class="cb-label" onclick="toggleCb(this)"><input type="checkbox" value="Oven"> 🫕 Oven</label>
+        <label class="cb-label checked" onclick="toggleCb(this)"><input type="checkbox" value="Microwave" checked> 📡 Microwave</label>
+        <label class="cb-label" onclick="toggleCb(this)"><input type="checkbox" value="Grill"> 🌡️ Grill</label>
+        <label class="cb-label" onclick="toggleCb(this)"><input type="checkbox" value="Airfryer"> 💨 Airfryer</label>
+      </div>
+    </div>
+
+    <!-- TRANSPORT -->
+    <div class="section-title">🚗 Transport</div>
+    <div class="grid">
+      <div class="field">
+        <label>Primary Transport</label>
+        <select id="transport" onchange="toggleVehicle()">
+          <option value="private">Private Vehicle</option>
+          <option value="public">Public Transport</option>
+          <option value="walk/bicycle">Walk / Bicycle</option>
+        </select>
+      </div>
+      <div class="field" id="vehicleTypeField">
+        <label>Vehicle Type</label>
+        <select id="vehicleType">
+          <option value="petrol">Petrol</option>
+          <option value="diesel">Diesel</option>
+          <option value="hybrid">Hybrid</option>
+          <option value="lpg">LPG</option>
+          <option value="electric">Electric</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Monthly Distance (km)</label>
+        <input type="number" id="distance" value="200" min="0" max="9999">
+        <span class="hint">Range: 0 – 9999</span>
+      </div>
+      <div class="field">
+        <label>Air Travel Frequency</label>
+        <select id="airTravel">
+          <option value="never">Never</option>
+          <option value="rarely" selected>Rarely</option>
+          <option value="frequently">Frequently</option>
+          <option value="very frequently">Very Frequently</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- LIFESTYLE -->
+    <div class="section-title">🌐 Lifestyle & Digital</div>
+    <div class="grid">
+      <div class="field">
+        <label>Social Activity</label>
+        <select id="social">
+          <option value="often">Often</option>
+          <option value="sometimes">Sometimes</option>
+          <option value="never">Never</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>TV / PC Hours / Day</label>
+        <input type="number" id="tvHours" value="4" min="0" max="24">
+        <span class="hint">Range: 0 – 24</span>
+      </div>
+      <div class="field">
+        <label>Internet Hours / Day</label>
+        <input type="number" id="netHours" value="3" min="0" max="24">
+        <span class="hint">Range: 0 – 24</span>
+      </div>
+    </div>
+
+    <!-- WASTE -->
+    <div class="section-title">♻️ Waste & Recycling</div>
+    <div class="grid">
+      <div class="field">
+        <label>Waste Bag Size</label>
+        <select id="wasteBag">
+          <option value="small">Small</option>
+          <option value="medium">Medium</option>
+          <option value="large" selected>Large</option>
+          <option value="extra large">Extra Large</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Waste Bags / Week</label>
+        <input type="number" id="wasteCount" value="2" min="1" max="7">
+        <span class="hint">Range: 1 – 7</span>
+      </div>
+      <div class="field full">
+        <label>What Do You Recycle?</label>
+        <div class="checkbox-group" id="recyclingGroup">
+          <label class="cb-label" onclick="toggleCb(this)"><input type="checkbox" value="Paper"> 📰 Paper</label>
+          <label class="cb-label checked" onclick="toggleCb(this)"><input type="checkbox" value="Plastic" checked> 🧴 Plastic</label>
+          <label class="cb-label" onclick="toggleCb(this)"><input type="checkbox" value="Glass"> 🍶 Glass</label>
+          <label class="cb-label checked" onclick="toggleCb(this)"><input type="checkbox" value="Metal" checked> 🔩 Metal</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-wrap">
+      <button class="btn" onclick="predict()">🌱 Calculate My Footprint</button>
+    </div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div id="output">
+    <div class="output-header">
+      <div class="emission-badge" id="emissionVal">—</div>
+      <span class="emission-unit">kg CO₂ per year</span>
+      <div><span class="level-pill" id="levelPill"></span></div>
+    </div>
+    <div class="gauge-wrap">
+      <div class="gauge-label"><span>0</span><span>6,000</span><span>12,000</span><span>20,000+</span></div>
+      <div class="gauge-track"><div class="gauge-fill" id="gaugeFill"></div></div>
+    </div>
+    <div class="suggestions-area">
+      <div class="suggestions-title">🌿 Personalised Suggestions</div>
+      <div id="tipsList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Background generation ──
+function rand(a,b){ return Math.random()*(b-a)+a; }
+
+// Stars
+const starsEl = document.getElementById('stars');
+for(let i=0;i<120;i++){
+  const s = document.createElement('div');
+  s.className='star';
+  const sz=rand(.5,2.5);
+  Object.assign(s.style,{
+    width:sz+'px', height:sz+'px',
+    left:rand(0,100)+'%', top:rand(0,65)+'%',
+    '--d':rand(2,5)+'s', '--delay':rand(0,4)+'s'
+  });
+  starsEl.appendChild(s);
+}
+
+// Leaves
+const leafColors=['#2d5a3d','#4a8c5c','#3a7050','#6db87a','#1a4a2e'];
+const leavesEl = document.getElementById('leaves');
+for(let i=0;i<18;i++){
+  const l=document.createElement('div');
+  l.className='leaf';
+  Object.assign(l.style,{
+    left:rand(0,100)+'%', top:'-30px',
+    '--size':rand(10,24)+'px',
+    '--c':leafColors[Math.floor(Math.random()*leafColors.length)],
+    '--fall-d':rand(7,14)+'s',
+    '--fall-delay':rand(0,12)+'s',
+    '--sway':rand(-80,80)+'px'
+  });
+  leavesEl.appendChild(l);
+}
+
+// Fireflies
+const ffEl=document.getElementById('fireflies');
+for(let i=0;i<20;i++){
+  const f=document.createElement('div');
+  f.className='firefly';
+  Object.assign(f.style,{
+    left:rand(5,95)+'%', top:rand(30,90)+'%',
+    '--fly-d':rand(4,9)+'s', '--fly-delay':rand(0,6)+'s',
+    '--dx':rand(-100,100)+'px', '--dy':rand(-100,50)+'px'
+  });
+  ffEl.appendChild(f);
+}
+
+// ── Checkbox toggle ──
+function toggleCb(lbl){
+  lbl.classList.toggle('checked');
+}
+
+// ── Vehicle field show/hide ──
+function toggleVehicle(){
+  const t=document.getElementById('transport').value;
+  document.getElementById('vehicleTypeField').style.display=(t==='private'?'flex':'none');
+}
+toggleVehicle();
+
+// ── Prediction logic ──
+function getChecked(groupId){
+  return [...document.querySelectorAll('#'+groupId+' .cb-label.checked input')].map(i=>i.value);
+}
+
+function getLevel(e){ return e<6000?'LOW':e<12000?'MEDIUM':'HIGH'; }
+
+function getSuggestions(u, emission){
+  const lvl=getLevel(emission), tips=[];
+  if(lvl==='HIGH') tips.push({i:'🔴', t:'Your carbon footprint is HIGH. Major lifestyle changes recommended.'});
+  else if(lvl==='MEDIUM') tips.push({i:'🟡', t:'Your carbon footprint is MODERATE. Some improvements can help.'});
+  else tips.push({i:'🟢', t:'Great! Your carbon footprint is LOW. Keep it up!'});
+
+  if(u.transport==='private') tips.push({i:'🚌', t:'Use public transport, carpooling, or cycling to cut transport emissions.'});
+  if(['petrol','diesel'].includes(u.vehicleType)) tips.push({i:'⚡', t:'Consider switching to an electric or hybrid vehicle.'});
+  if(u.distance>300) tips.push({i:'🏠', t:'Try reducing monthly travel distance or explore remote work options.'});
+  if(['frequently','very frequently'].includes(u.airTravel)) tips.push({i:'✈️', t:'Air travel is emissions-heavy. Reduce flights or offset your carbon.'});
+  if(u.diet==='omnivore') tips.push({i:'🥗', t:'Reduce meat consumption — a plant-based diet can cut emissions by up to 50%.'});
+  if(u.clothes>10) tips.push({i:'👕', t:'Fast fashion boosts emissions. Buy fewer, sustainable clothing items.'});
+  if(u.tvHours>8) tips.push({i:'💻', t:'Reduce screen time to save electricity.'});
+  if(u.energyEff==='No') tips.push({i:'💡', t:'Use energy-efficient appliances — LEDs, inverter ACs, and star-rated devices.'});
+  if(u.wasteCount>4) tips.push({i:'🗑️', t:'Try reducing waste and composting organic materials.'});
+  if(!u.cooking.map(c=>c.toLowerCase()).some(c=>c==='microwave'||c==='airfryer')) tips.push({i:'🔌', t:'Microwave & airfryer use significantly less energy than a stove or oven.'});
+  if(u.recycling.length===0) tips.push({i:'♻️', t:'Start recycling paper, plastic, glass, and metal.'});
+  if(u.heating==='coal') tips.push({i:'🔥', t:'Coal heating is the most carbon-intensive. Consider switching to electricity or gas.'});
+  return tips;
+}
+
+function predict(){
+  const u = {
+    bodyType: document.getElementById('bodyType').value,
+    sex: document.getElementById('sex').value,
+    diet: document.getElementById('diet').value,
+    shower: document.getElementById('shower').value,
+    heating: document.getElementById('heating').value,
+    energyEff: document.getElementById('energyEff').value,
+    transport: document.getElementById('transport').value,
+    vehicleType: document.getElementById('vehicleType').value,
+    social: document.getElementById('social').value,
+    grocery: +document.getElementById('grocery').value,
+    airTravel: document.getElementById('airTravel').value,
+    distance: +document.getElementById('distance').value,
+    wasteBag: document.getElementById('wasteBag').value,
+    wasteCount: +document.getElementById('wasteCount').value,
+    tvHours: +document.getElementById('tvHours').value,
+    clothes: +document.getElementById('clothes').value,
+    netHours: +document.getElementById('netHours').value,
+    recycling: getChecked('recyclingGroup'),
+    cooking: getChecked('cookingGroup')
+  };
+
+  // Heuristic model that mirrors the training logic
+  let e = 2800; // baseline
+
+  // Diet
+  const dietMod={omnivore:800,pescatarian:400,vegetarian:100,vegan:0};
+  e += dietMod[u.diet]||0;
+
+  // Transport
+  if(u.transport==='private'){
+    const vMod={petrol:1,diesel:1.1,hybrid:.5,lpg:.8,electric:.15};
+    e += u.distance*(vMod[u.vehicleType]||1)*0.35;
+  } else if(u.transport==='public'){
+    e += u.distance*0.08;
+  }
+
+  // Air travel
+  const airMod={never:0,rarely:600,frequently:2000,'very frequently':4000};
+  e += airMod[u.airTravel]||0;
+
+  // Heating
+  const heatMod={coal:1200,'natural gas':700,wood:500,electricity:200};
+  e += heatMod[u.heating]||0;
+
+  // Energy efficiency
+  if(u.energyEff==='No') e+=400;
+  else if(u.energyEff==='Sometimes') e+=150;
+
+  // Grocery
+  e += (u.grocery-150)*3;
+
+  // Clothes
+  e += u.clothes*40;
+
+  // Screen time
+  e += (u.tvHours+u.netHours)*18;
+
+  // Waste
+  e += u.wasteCount*120;
+  const wasteMod={small:-100,medium:0,large:150,'extra large':300};
+  e += wasteMod[u.wasteBag]||0;
+
+  // Shower
+  const showerMod={'daily':0,'more frequently':200,'twice a day':350,'less frequently':-100};
+  e += showerMod[u.shower]||0;
+
+  // Recycling
+  e -= u.recycling.length*120;
+
+  // Cooking
+  const effCooking=['Microwave','Airfryer'];
+  if(u.cooking.some(c=>effCooking.includes(c))) e-=150;
+
+  // Social
+  if(u.social==='often') e+=200;
+
+  e = Math.max(300, Math.round(e));
+
+  // Display
+  const level=getLevel(e);
+  const outEl=document.getElementById('output');
+  outEl.className=''; // reset
+  outEl.style.display='block';
+  outEl.classList.add('level-'+level);
+
+  // Animated count-up
+  const valEl=document.getElementById('emissionVal');
+  let cur=0, target=e, step=Math.ceil(target/60);
+  const timer=setInterval(()=>{
+    cur=Math.min(cur+step,target);
+    valEl.textContent=cur.toLocaleString();
+    if(cur>=target) clearInterval(timer);
+  },16);
+
+  // Level pill
+  const pillEl=document.getElementById('levelPill');
+  const icons={LOW:'🌿',MEDIUM:'⚠️',HIGH:'🔴'};
+  pillEl.textContent=icons[level]+' '+level+' FOOTPRINT';
+  pillEl.style.setProperty('color', level==='LOW'?'var(--glow-low)':level==='MEDIUM'?'var(--glow-med)':'var(--glow-high)');
+
+  // Gauge
+  setTimeout(()=>{
+    const pct=Math.min(e/20000*100,100);
+    document.getElementById('gaugeFill').style.width=pct+'%';
+  },100);
+
+  // Tips
+  const tips=getSuggestions(u,e);
+  const tipsList=document.getElementById('tipsList');
+  tipsList.innerHTML='';
+  tips.forEach((tip,idx)=>{
+    const d=document.createElement('div');
+    d.className='tip';
+    d.style.setProperty('--i',(idx*.07)+'s');
+    d.innerHTML=`<span class="tip-icon">${tip.i}</span><span>${tip.t}</span>`;
+    tipsList.appendChild(d);
+  });
+
+  outEl.scrollIntoView({behavior:'smooth',block:'start'});
+}
+</script>
+</body>
+</html>
